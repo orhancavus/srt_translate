@@ -1,0 +1,22 @@
+#!/bin/bash
+echo
+echo "Run translator"
+echo "Usage: $0 <input_file> <output_dir> <function> <language>"
+echo "Example: $0 input/sample.srt output deep tr"
+echo "Example: $0 input/sample.srt output multi_deep tr"
+echo
+
+if [ "$#" -ne 4 ]; then
+    echo "Error: Invalid number of arguments"
+    echo "Usage: $0 <input_file> <output_dir> <function> <language>"
+    echo
+    exit 1
+fi
+
+# run_gl_translate "input/Trikvartiri.srt" output multi_deep tr
+# python gl_translate.py --audio_file input/sample.srt --output_dir output --function deep
+
+source /Users/orhancavus/Development/Python/local_projects/llm_agents/srt_translate/venv/bin/activate
+
+Echo running gl_translate.py with parameters --audio_file "$1" --output_dir "$2" --function "$3" --language "$4"
+python gl_translate.py --audio_file "$1" --output_dir "$2" --function "$3" --language "$4"

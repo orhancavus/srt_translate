@@ -39,4 +39,5 @@ To translate a single SRT file to a specific language, use the [translate_srt_de
 ```python
 from gl_translate import translate_srt_deep
 
-translate_srt_deep("input/Cernobil2024_en.srt", "output/Cernobil2024_es.srt", target_language="es")
+translate_srt_deep("input/sample.srt", "output/sample_es.srt", target_language="es")
+

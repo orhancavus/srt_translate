@@ -1,22 +1,34 @@
+import os
+import argparse
 import pysrt
 from googletrans import Translator
 from deep_translator import GoogleTranslator
 from show_progress import progress_bar
-import os
 
-# dest_languages = ["tr", "bg", "es", "fr", "de", "it", "ru"]
-destination_languages = ["ru", "es", "fr", "de", "it"]
+# Common languages to translate to
+destination_languages = ["tr", "bg", "ru", "es", "fr", "de", "it"]
 
 
 def translate_srt_deep(input_file, output_dir, language="es"):
-    # Load subtitles
-    subs = pysrt.open(input_file, encoding="utf-8")
+    """
+    Translates the subtitles in an SRT file to a specified language using Google Translate.
+    Args:
+        input_file (str): Path to the input SRT file.
+        output_dir (str): Directory where the translated SRT file will be saved.
+        language (str, optional): Target language code for translation. Defaults to "es" (Spanish).
+    Raises:
+        Exception: If an error occurs during translation, the original subtitle text is retained with a prefix "***".
+    """
 
-    file_name = os.path.splitext(os.path.basename(input_file))[0]
-    # Create output directory if it doesn't exist
-    output_path = os.path.join(output_dir, file_name)
-    os.makedirs(output_path, exist_ok=True)
-    output_file = os.path.join(output_path, f"{file_name}_to_{language}.srt")
+    # Load subtitles
+    subs = pysrt.open(
+        input_file,
+        encoding="utf-8",
+    )
+
+    output_file = generate_output_file_path(input_file, output_dir, language)
+    if output_file is None:
+        return
 
     # Initialize translator
     translator = GoogleTranslator(source="auto", target=language)
@@ -36,7 +48,32 @@ def translate_srt_deep(input_file, output_dir, language="es"):
     subs.save(output_file, encoding="utf-8")
 
 
+def generate_output_file_path(input_file, output_dir, language):
+    file_name = os.path.splitext(os.path.basename(input_file))[0]
+    # Create output directory if it doesn't exist
+    output_path = os.path.join(output_dir, file_name)
+    os.makedirs(output_path, exist_ok=True)
+    output_file = os.path.join(output_path, f"{file_name}_to_{language}.srt")
+
+    if os.path.exists(output_file):
+        print(f"Output file {output_file} already exists.")
+        return None
+    return output_file
+
+
 def translate_srt(input_file, output_dir, language="es"):
+    """
+    Translates the subtitles in an SRT file to a specified language and saves the translated subtitles to a new file.
+    Args:
+        input_file (str): The path to the input SRT file.
+        output_dir (str): The directory where the translated SRT file will be saved.
+        language (str, optional): The target language code for translation (default is "es" for Spanish).
+    Raises:
+        Exception: If an error occurs during translation, the original text is used with an error message printed.
+    Returns:
+        None
+    """
+
     # in some cases could not translate to es
     # Load subtitles
     subs = pysrt.open(input_file, encoding="utf-8")
@@ -44,11 +81,9 @@ def translate_srt(input_file, output_dir, language="es"):
     # Initialize translator
     translator = Translator()
 
-    file_name = os.path.splitext(os.path.basename(input_file))[0]
-    # Create output directory if it doesn't exist
-    output_path = os.path.join(output_dir, file_name)
-    os.makedirs(output_path, exist_ok=True)
-    output_file = os.path.join(output_path, f"{file_name}_to_{language}.srt")
+    output_file = generate_output_file_path(input_file, output_dir, language)
+    if output_file is None:
+        return
 
     # Translate each subtitle
     for sub in progress_bar(
@@ -84,19 +119,37 @@ def translate_srt_to_all_languages(
         translate_srt_deep(input_file, output_dir, language=language)
 
 
-# TODO1 add the main function
 # TODO2 summarize the subtitles with local LLM
 
-if "__main__" == __name__:
-    audio_file = "input/Bulgaria1984.srt"
-    output_dir = "output"
 
-    # Example usage
-    function_to_use = (
-        "all"  # Change this to "deep", "google", or "all" to use different functions
+def main():
+    parser = argparse.ArgumentParser(
+        description="Translate SRT files to different languages."
+    )
+    parser.add_argument("--audio_file", type=str, help="Path to the input SRT file.")
+    parser.add_argument(
+        "--output_dir", type=str, help="Directory to save the translated SRT files."
+    )
+    parser.add_argument(
+        "--function",
+        type=str,
+        choices=["deep", "google", "multi_deep"],
+        default="multi_deep",
+        help="Function to use for translation.",
+    )
+    parser.add_argument(
+        "--language",
+        type=str,
+        default="es",
+        help="Target language for translation (only used with 'deep' or 'google' functions).",
     )
 
-    language = "no"
+    args = parser.parse_args()
+
+    audio_file = args.audio_file
+    output_dir = args.output_dir
+    function_to_use = args.function
+    language = args.language
 
     if function_to_use == "deep":
         print(f"\n\nTranslating {audio_file} to {language} and saving to {output_dir}")
@@ -104,8 +157,8 @@ if "__main__" == __name__:
     elif function_to_use == "google":
         print(f"\n\nTranslating {audio_file} to {language} and saving to {output_dir}")
         translate_srt(audio_file, output_dir, language=language)
-    elif function_to_use == "all":
-        dest_langs = ["no"]  # destination_languages
+    elif function_to_use == "multi_deep":
+        dest_langs = destination_languages
         print(
             f"\n\nTranslating {audio_file} to {dest_langs} and saving to {output_dir}"
         )
@@ -114,4 +167,10 @@ if "__main__" == __name__:
             audio_file, output_dir, dest_languages=dest_langs
         )
     else:
-        print("Invalid function specified. Please choose 'deep', 'google', or 'all'.")
+        print(
+            "Invalid function specified. Please choose 'deep', 'google', or 'multi_deep'."
+        )
+
+
+if __name__ == "__main__":
+    main()
