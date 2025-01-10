@@ -3,6 +3,9 @@
 
 This project provides a tool to translate SRT subtitle files into multiple languages using the `deep_translator` library.
 
+Author : Orhan Cavus  
+Date   : January 2025  
+
 ## Features
 
 - Translate SRT files to multiple languages.
