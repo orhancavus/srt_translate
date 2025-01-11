@@ -16,7 +16,7 @@ fi
 # run_gl_translate "input/Trikvartiri.srt" output multi_deep tr
 # python gl_translate.py --audio_file input/sample.srt --output_dir output --function deep
 
-source /Users/orhancavus/Development/Python/local_projects/llm_agents/srt_translate/venv/bin/activate
+source venv/bin/activate
 
 Echo running gl_translate.py with parameters --audio_file "$1" --output_dir "$2" --function "$3" --language "$4"
 python gl_translate.py --audio_file "$1" --output_dir "$2" --function "$3" --language "$4"
