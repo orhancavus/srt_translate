@@ -1,6 +1,7 @@
 import os
 import argparse
 import pysrt
+import srt
 from googletrans import Translator
 from deep_translator import GoogleTranslator
 from show_progress import progress_bar
@@ -11,7 +12,47 @@ destination_languages = ["tr", "bg", "ru", "es", "fr", "de", "it"]
 
 def translate_srt_deep(input_file, output_dir, language="es"):
     """
-    Translates the subtitles in an SRT file to a specified language using Google Translate.
+    Translates the subtitles in an SRT file to a specified language using deep_translator's Google Translate.(this is more stable than googletrans)
+    Args:
+        input_file (str): Path to the input SRT file.
+        output_dir (str): Directory where the translated SRT file will be saved.
+        language (str, optional): Target language code for translation. Defaults to "es" (Spanish).
+    Raises:
+        Exception: If an error occurs during translation, the original subtitle text is retained with a prefix "***".
+    """
+
+    # Load subtitles
+    with open(input_file, "r", encoding="utf-8") as f:
+        subs = list(srt.parse(f.read()))
+
+    output_file = generate_output_file_path(input_file, output_dir, language)
+    if output_file is None:
+        return
+
+    # Initialize translator
+    translator = GoogleTranslator(source="auto", target=language)
+
+    for sub in subs:
+        try:
+            # print(f"\nTranslating: {sub.content}")
+            translation = translator.translate(sub.content)
+            sub.content = translation
+            # print(f"Translated: {sub.content}")
+        except Exception as e:
+            print(f"Error translating subtitle: {sub.content} \nException: {e}")
+            sub.content = (
+                f"***{sub.content}"  # Fallback to original text if an exception occurs
+            )
+        print(sub)
+
+    # Save the translated subtitles
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(srt.compose(subs))
+
+
+def translate_pysrt_deep(input_file, output_dir, language="es"):
+    """
+    Translates the subtitles in an SRT file to a specified language using deep_translator's Google Translate.(this is more stable than googletrans)
     Args:
         input_file (str): Path to the input SRT file.
         output_dir (str): Directory where the translated SRT file will be saved.
@@ -64,6 +105,7 @@ def generate_output_file_path(input_file, output_dir, language):
 def translate_srt(input_file, output_dir, language="es"):
     """
     Translates the subtitles in an SRT file to a specified language and saves the translated subtitles to a new file.
+    Uses the googletrans library for translation.
     Args:
         input_file (str): The path to the input SRT file.
         output_dir (str): The directory where the translated SRT file will be saved.
@@ -173,4 +215,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    #  python gl_translate.py --audio_file input/Archive/Dark_Period.srt --output_dir output --function multi_deep
+    # main()
+    translate_srt_deep("input/archive/Dark_period_short.srt", "output", language="tr")
