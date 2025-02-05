@@ -1,7 +1,5 @@
 import os
 import argparse
-import pysrt
-import srt
 from googletrans import Translator
 from deep_translator import GoogleTranslator
 from show_progress import progress_bar
@@ -44,8 +42,13 @@ def read_srt_file(input_file):
 def translate_subtitles(subtitles, translator):
     buffer = []
     translated_subtitles = []
+    i = 0
     for line in subtitles:
+        # for line in progress_bar(
+        #    subtitles, total=len(subtitles), prefix="Progress", suffix="Complete", length=40
+        # ):
         line = line.strip()
+        # print(line)
         if re.match(r"^\d+$", line):  # Subtitle index
             if buffer:
                 translated_subtitles.append("\n".join(buffer) + "\n\n")
@@ -56,6 +59,8 @@ def translate_subtitles(subtitles, translator):
         elif line:  # Text line
             try:
                 translated_text = translator.translate(line)
+                i += 1
+                print(f"{i} / {len(subtitles)} \n {translated_text}")
                 buffer.append(translated_text)
             except Exception as e:
                 print(f"Error translating text: {line} \nException: {e}")
@@ -145,6 +150,4 @@ if __name__ == "__main__":
     # translate_srt_deep("input/archive/Dark_period_short.srt", "output", language="tr")
 
     # Example usage
-    process_srt_file(
-        "input/archive/Dark_period_short.srt", "Dark_period_short_output", "es"
-    )
+    process_srt_file("input/archive/Bulgaria1984.srt", "output", "tr")
