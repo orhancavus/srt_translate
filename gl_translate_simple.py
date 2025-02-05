@@ -18,38 +18,59 @@ def translate_text(text, language):
 
 
 def process_srt_file(input_file, output_dir, language):
-
     output_file = generate_output_file_path(input_file, output_dir, language)
     if output_file is None:
         return
+
     # Initialize translator
     translator = GoogleTranslator(source="auto", target=language)
 
-    with open(input_file, "r", encoding="utf-8") as infile, open(
-        output_file, "w", encoding="utf-8"
-    ) as outfile:
-        buffer = []
-        for line in infile:
-            line = line.strip()
-            if re.match(r"^\d+$", line):  # Subtitle index
-                if buffer:
-                    outfile.write("\n".join(buffer) + "\n\n")
-                    buffer = []
-                buffer.append(line)
-            elif "-->" in line:  # Timestamp line
-                buffer.append(line)
-            elif line:  # Text line
-                try:
-                    translated_text = translator.translate(
-                        line
-                    )  # translate_text(line, language)
-                    buffer.append(translated_text)
-                except Exception as e:
-                    print(f"Error translating text: {line} \nException: {e}")
-                    buffer.append(f"***{line}")
+    # Read the input file
+    subtitles = read_srt_file(input_file)
 
-        if buffer:  # Write last subtitle block
-            outfile.write("\n".join(buffer) + "\n")
+    # Translate subtitles
+    translated_subtitles = translate_subtitles(subtitles, translator)
+
+    # Write the translated subtitles to the output file
+    write_srt_file(output_file, translated_subtitles)
+
+
+def read_srt_file(input_file):
+    with open(input_file, "r", encoding="utf-8") as infile:
+        subtitles = infile.readlines()
+    return subtitles
+
+
+def translate_subtitles(subtitles, translator):
+    buffer = []
+    translated_subtitles = []
+    for line in subtitles:
+        line = line.strip()
+        if re.match(r"^\d+$", line):  # Subtitle index
+            if buffer:
+                translated_subtitles.append("\n".join(buffer) + "\n\n")
+                buffer = []
+            buffer.append(line)
+        elif "-->" in line:  # Timestamp line
+            buffer.append(line)
+        elif line:  # Text line
+            try:
+                translated_text = translator.translate(line)
+                buffer.append(translated_text)
+            except Exception as e:
+                print(f"Error translating text: {line} \nException: {e}")
+                buffer.append(f"***{line}")
+
+    if buffer:  # Add last subtitle block
+        translated_subtitles.append("\n".join(buffer) + "\n")
+
+    return translated_subtitles
+
+
+def write_srt_file(output_file, translated_subtitles):
+    with open(output_file, "w", encoding="utf-8") as outfile:
+        for subtitle in translated_subtitles:
+            outfile.write(subtitle)
 
 
 def generate_output_file_path(input_file, output_dir, language):
@@ -124,4 +145,6 @@ if __name__ == "__main__":
     # translate_srt_deep("input/archive/Dark_period_short.srt", "output", language="tr")
 
     # Example usage
-    process_srt_file("input/archive/Dark_period.srt", "output", "es")
+    process_srt_file(
+        "input/archive/Dark_period_short.srt", "Dark_period_short_output", "es"
+    )
