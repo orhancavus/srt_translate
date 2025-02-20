@@ -1,13 +1,16 @@
+import re
 import os
 import argparse
-from googletrans import Translator
-from deep_translator import GoogleTranslator
+from googletrans import Translator  # daha hizli ancak tam olarak dogru tercume yapmiyor
+from deep_translator import (
+    GoogleTranslator,
+)  # daha kaliteli terc]me ediyor ancak zamanla duruyor
 from show_progress import progress_bar
 
 # Common languages to translate to
 destination_languages = ["tr", "bg", "ru", "es", "fr", "de", "it"]  #
 
-import re
+USE_DEEP_TRANSLATOR = True  # False
 
 
 def translate_text(text, language):
@@ -20,9 +23,10 @@ def process_srt_file(input_file, output_dir, language):
     if output_file is None:
         return
 
-    # Initialize translator
-    translator = GoogleTranslator(source="auto", target=language)
-
+    if USE_DEEP_TRANSLATOR:
+        translator = GoogleTranslator(source="auto", target=language)
+    else:
+        translator = Translator()
     # Read the input file
     subtitles = read_srt_file(input_file)
 
@@ -58,7 +62,11 @@ def translate_subtitles(subtitles, translator):
             buffer.append(line)
         elif line:  # Text line
             try:
-                translated_text = translator.translate(line)
+                if USE_DEEP_TRANSLATOR:
+                    translated_text = translator.translate(line)
+                else:
+                    translated_text = translator.translate(line, dest="tr").text
+
                 i += 1
                 print(f"{i} / {len(subtitles)} \n {translated_text}")
                 buffer.append(translated_text)
@@ -150,4 +158,4 @@ if __name__ == "__main__":
     # translate_srt_deep("input/archive/Dark_period_short.srt", "output", language="tr")
 
     # Example usage
-    process_srt_file("input/archive/Bulgaria1984.srt", "output", "tr")
+    process_srt_file("input/archive/Bulgaria1984.srt", "output/archive", "tr")
