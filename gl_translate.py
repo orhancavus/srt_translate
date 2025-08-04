@@ -153,9 +153,7 @@ def translate_srt(input_file, output_dir, language="es"):
     subs.save(output_file, encoding="utf-8")
 
 
-def translate_srt_to_all_languages(
-    input_file, output_dir, dest_languages=destination_languages
-):
+def translate_srt_to_all_languages(input_file, output_dir, dest_languages):
     for language in dest_languages:
         print(f"Translating to {language} and saving to folder : {output_dir}")
         translate_srt_deep(input_file, output_dir, language=language)
@@ -193,6 +191,12 @@ def main():
     function_to_use = args.function
     language = args.language
 
+    # Check if required parameters are supplied
+    if not audio_file or not output_dir:
+        print("Error: --audio_file and --output_dir are required parameters.")
+        parser.print_help()
+        return
+
     if function_to_use == "deep":
         print(f"\n\nTranslating {audio_file} to {language} and saving to {output_dir}")
         translate_srt_deep(audio_file, output_dir, language=language)
@@ -200,6 +204,7 @@ def main():
         print(f"\n\nTranslating {audio_file} to {language} and saving to {output_dir}")
         translate_srt(audio_file, output_dir, language=language)
     elif function_to_use == "multi_deep":
+        # ["tr", "bg", "ru", "es", "fr", "de", "it"]
         dest_langs = destination_languages
         print(
             f"\n\nTranslating {audio_file} to {dest_langs} and saving to {output_dir}"
@@ -216,5 +221,5 @@ def main():
 
 if __name__ == "__main__":
     #  python gl_translate.py --audio_file input/Archive/Dark_Period.srt --output_dir output --function multi_deep
-    # main()
-    translate_srt_deep("input/archive/Dark_period_short.srt", "output", language="tr")
+    main()
+    # translate_srt_deep("input/archive/Dark_period_short.srt", "output", language="tr")

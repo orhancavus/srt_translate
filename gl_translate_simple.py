@@ -7,34 +7,23 @@ from deep_translator import (
 )  # daha kaliteli terc]me ediyor ancak zamanla duruyor
 from show_progress import progress_bar
 
-# Common languages to translate to
-destination_languages = ["tr", "bg", "ru", "es", "fr", "de", "it"]  #
+#  python gl_translate_simple.py --audio_file /Users/orhancavus/LocalDocuments/Podcast/CampoDelCielo/Campo_subs/Campo_En.srt --output_dir /Users/orhancavus/LocalDocuments/Podcast/CampoDelCielo/Campo_subs --language de
+
 
 USE_DEEP_TRANSLATOR = True  # False
 
 
-def translate_text(text, language):
-    # Dummy translation function (replace this with an actual translation logic)
-    return text[::-1]  # Example: reversing the text as a placeholder
+def generate_output_file_path(input_file, output_dir, language):
+    file_name = os.path.splitext(os.path.basename(input_file))[0]
+    # Create output directory if it doesn't exist
+    output_path = os.path.join(output_dir, file_name)
+    os.makedirs(output_path, exist_ok=True)
+    output_file = os.path.join(output_path, f"{file_name}_to_{language}.srt")
 
-
-def process_srt_file(input_file, output_dir, language):
-    output_file = generate_output_file_path(input_file, output_dir, language)
-    if output_file is None:
-        return
-
-    if USE_DEEP_TRANSLATOR:
-        translator = GoogleTranslator(source="auto", target=language)
-    else:
-        translator = Translator()
-    # Read the input file
-    subtitles = read_srt_file(input_file)
-
-    # Translate subtitles
-    translated_subtitles = translate_subtitles(subtitles, translator)
-
-    # Write the translated subtitles to the output file
-    write_srt_file(output_file, translated_subtitles)
+    if os.path.exists(output_file):
+        print(f"Output file {output_file} already exists.")
+        return None
+    return output_file
 
 
 def read_srt_file(input_file):
@@ -47,6 +36,7 @@ def translate_subtitles(subtitles, translator):
     buffer = []
     translated_subtitles = []
     i = 0
+    total_subs = round(len(subtitles) / 4)
     for line in subtitles:
         # for line in progress_bar(
         #    subtitles, total=len(subtitles), prefix="Progress", suffix="Complete", length=40
@@ -68,7 +58,7 @@ def translate_subtitles(subtitles, translator):
                     translated_text = translator.translate(line, dest="tr").text
 
                 i += 1
-                print(f"{i} / {len(subtitles)} \n {translated_text}")
+                print(f"{i} / {total_subs} \n{translated_text}")
                 buffer.append(translated_text)
             except Exception as e:
                 print(f"Error translating text: {line} \nException: {e}")
@@ -86,42 +76,32 @@ def write_srt_file(output_file, translated_subtitles):
             outfile.write(subtitle)
 
 
-def generate_output_file_path(input_file, output_dir, language):
-    file_name = os.path.splitext(os.path.basename(input_file))[0]
-    # Create output directory if it doesn't exist
-    output_path = os.path.join(output_dir, file_name)
-    os.makedirs(output_path, exist_ok=True)
-    output_file = os.path.join(output_path, f"{file_name}_to_{language}.srt")
+def process_srt_file(input_file, output_dir, language):
+    output_file = generate_output_file_path(input_file, output_dir, language)
+    if output_file is None:
+        return
 
-    if os.path.exists(output_file):
-        print(f"Output file {output_file} already exists.")
-        return None
-    return output_file
+    if USE_DEEP_TRANSLATOR:
+        translator = GoogleTranslator(source="auto", target=language)
+    else:
+        translator = Translator()
+    # Read the input file
+    subtitles = read_srt_file(input_file)
 
+    # Translate subtitles
+    translated_subtitles = translate_subtitles(subtitles, translator)
 
-def translate_srt_to_all_languages(
-    input_file, output_dir, dest_languages=destination_languages
-):
-    for language in dest_languages:
-        print(f"Translating to {language} and saving to folder : {output_dir}")
-        # translate_srt_deep(input_file, output_dir, language=language)
-        process_srt_file(input_file, output_dir, language)
+    # Write the translated subtitles to the output file
+    write_srt_file(output_file, translated_subtitles)
 
 
-def main():
+def main_simple():
     parser = argparse.ArgumentParser(
         description="Translate SRT files to different languages."
     )
     parser.add_argument("--audio_file", type=str, help="Path to the input SRT file.")
     parser.add_argument(
         "--output_dir", type=str, help="Directory to save the translated SRT files."
-    )
-    parser.add_argument(
-        "--function",
-        type=str,
-        choices=["deep", "google", "multi_deep"],
-        default="multi_deep",
-        help="Function to use for translation.",
     )
     parser.add_argument(
         "--language",
@@ -134,28 +114,22 @@ def main():
 
     audio_file = args.audio_file
     output_dir = args.output_dir
-    function_to_use = args.function
-    language = args.language
+    ##function_to_use = args.function
+    dest_langs = args.language
 
-    if function_to_use == "multi_deep":
-        dest_langs = destination_languages
-        print(
-            f"\n\nTranslating {audio_file} to {dest_langs} and saving to {output_dir}"
-        )
+    print(f"\n\nTranslating {audio_file} to {dest_langs} and saving to {output_dir}")
 
-        translate_srt_to_all_languages(
-            audio_file, output_dir, dest_languages=dest_langs
-        )
-    else:
-        print(
-            "Invalid function specified. Please choose 'deep', 'google', or 'multi_deep'."
-        )
+    process_srt_file(audio_file, output_dir, language=dest_langs)
 
 
 if __name__ == "__main__":
-    #  python gl_translate.py --audio_file input/Archive/Dark_Period.srt --output_dir output --function multi_deep
-    # main()
+    #  python gl_translate_simple.py --audio_file /Users/orhancavus/LocalDocuments/Podcast/CampoDelCielo/Campo_subs/Campo_En.srt --output_dir /Users/orhancavus/LocalDocuments/Podcast/CampoDelCielo/Campo_subs --language de
+    main_simple()
     # translate_srt_deep("input/archive/Dark_period_short.srt", "output", language="tr")
 
     # Example usage
-    process_srt_file("input/archive/Bulgaria1984.srt", "output/archive", "tr")
+    # process_srt_file(
+    #    "/Users/orhancavus/LocalDocuments/Podcast/CompoDelCielo/Campo.srt",
+    #    "/Users/orhancavus/LocalDocuments/Podcast/CompoDelCielo",
+    #    "en",
+    # )
